@@ -1,0 +1,12 @@
+[package]
+name = "my_macro"
+version = "0.1.0"
+authors = ["Me <Zinnusl@draig.de>"]
+
+
+[lib]
+crate_type = ["proc-macro"]
+proc-macro = true
+
+[dependencies]
+glob = "0.3.1"
