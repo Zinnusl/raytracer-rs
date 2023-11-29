@@ -19,6 +19,7 @@ pub type Pnt3 = Vec3;
 impl std::ops::Index<usize> for Vec3 {
     type Output = f64;
 
+    #[requires(i < 3)]
     fn index(&self, i: usize) -> &f64 {
         match i {
             0 => &self.x,
@@ -29,6 +30,7 @@ impl std::ops::Index<usize> for Vec3 {
 }
 
 impl std::ops::IndexMut<usize> for Vec3 {
+    #[requires(i < 3)]
     fn index_mut(&mut self, i: usize) -> &mut f64 {
         match i {
             0 => &mut self.x,
@@ -39,6 +41,13 @@ impl std::ops::IndexMut<usize> for Vec3 {
 }
 
 impl Vec3 {
+    pub fn new(x: impl Into<f64>, y: impl Into<f64>, z: impl Into<f64>) -> Vec3 {
+        Vec3 {
+            x: x.into(),
+            y: y.into(),
+            z: z.into(),
+        }
+    }
     pub fn len(&self) -> f64 {
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }
@@ -81,8 +90,25 @@ impl Vec3 {
 }
 
 impl UnitVec3 {
-    pub fn len(&self) -> f64 {
-        1.0
+    #[ensures(((ret.x * ret.x + ret.y * ret.y + ret.z * ret.z).sqrt() - 1.0) < 0.0001)]
+    pub fn new_unchecked(x: impl Into<f64>, y: impl Into<f64>, z: impl Into<f64>) -> UnitVec3 {
+        let x = x.into();
+        let y = y.into();
+        let z = z.into();
+        UnitVec3 { x, y, z }
+    }
+
+    #[ensures(((ret.x * ret.x + ret.y * ret.y + ret.z * ret.z).sqrt() - 1.0) < 0.0001)]
+    pub fn new(x: impl Into<f64>, y: impl Into<f64>, z: impl Into<f64>) -> UnitVec3 {
+        let x = x.into();
+        let y = y.into();
+        let z = z.into();
+        let len = (x * x + y * y + z * z).sqrt();
+        UnitVec3 {
+            x: x / len,
+            y: y / len,
+            z: z / len,
+        }
     }
 
     pub fn dot(&self, other: impl Into<Vec3>) -> f64 {
@@ -97,10 +123,6 @@ impl UnitVec3 {
             y: -(self.x * other.z - self.z * other.x),
             z: self.x * other.y - self.y * other.x,
         }
-    }
-
-    pub fn normalize(&self) -> UnitVec3 {
-        self.clone()
     }
 }
 
@@ -213,6 +235,7 @@ impl std::ops::Mul<f64> for UnitVec3 {
 impl std::ops::Index<usize> for UnitVec3 {
     type Output = f64;
 
+    #[requires(i < 3)]
     fn index(&self, i: usize) -> &f64 {
         match i {
             0 => &self.x,
@@ -223,6 +246,7 @@ impl std::ops::Index<usize> for UnitVec3 {
 }
 
 impl std::ops::IndexMut<usize> for UnitVec3 {
+    #[requires(i < 3)]
     fn index_mut(&mut self, i: usize) -> &mut f64 {
         match i {
             0 => &mut self.x,

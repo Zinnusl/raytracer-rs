@@ -3,9 +3,7 @@ use contracts::*;
 use crate::camera::Camera;
 use crate::color::Color;
 use crate::ray::Ray;
-use crate::scene::sphere::Sphere;
 use crate::scene::Scene;
-use crate::vec3::{Pnt3, UnitVec3};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Image {
@@ -16,6 +14,8 @@ pub struct Image {
 }
 
 impl Image {
+    #[requires(width > 0)]
+    #[requires(height > 0)]
     #[ensures(ret.pixels.len() == (ret.width * ret.height) as usize)]
     pub fn noise<RandGen>(rand: &mut RandGen, width: u32, height: u32) -> Image
     where
@@ -35,6 +35,9 @@ impl Image {
         }
     }
 
+    #[requires(width > 0)]
+    #[requires(height > 0)]
+    #[ensures(ret.pixels.len() == (ret.width * ret.height) as usize)]
     pub fn gen_image(cam: &Camera, scene: &Scene, width: u32, height: u32) -> Image {
         // ray_gen: &mut dyn Iterator<Item = Ray>
         let ray_gen = (0..width * height).map(|i| {
@@ -60,7 +63,7 @@ impl Image {
         image
     }
 
-    #[requires(self.pixels.len() == (self.width * self.height) as usize)]
+    #[invariant(self.pixels.len() == (self.width * self.height) as usize)]
     pub fn save_to_file(&self, filename: &str) -> std::io::Result<()> {
         use std::fs::File;
         use std::io::Write;
@@ -77,6 +80,7 @@ impl Image {
 
 #[cfg(test)]
 mod tests {
+    use crate::vec3::{Pnt3, UnitVec3};
     use crate::{scene, vec3};
 
     use super::*;
@@ -97,8 +101,9 @@ mod tests {
         image.save_to_file("/tmp/noise.ppm").unwrap();
 
         // Check if file size is ok
-        // let metadata = std::fs::metadata("/tmp/noise.ppm").unwrap();
-        // assert_eq!(metadata.len(), );
+        let metadata = std::fs::metadata("/tmp/noise.ppm").unwrap();
+        // greater than 1600 * 900 * 3
+        assert!(metadata.len() > 1600 * 900 * 3);
     }
 
     #[test]

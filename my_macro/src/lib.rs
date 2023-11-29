@@ -108,7 +108,7 @@ pub fn add_containers_from_files(args: TokenStream, input: TokenStream) -> Token
                     self.{}s.iter().map(|obj| obj.intersect(ray))
                         .filter(|x| x.is_some())
                         .map(|x| x.unwrap())
-                        .nth(0)
+                        .min_by(|x, y| x.0.partial_cmp(&y.0).unwrap())
                 }}",
                 x, x
             )
@@ -117,17 +117,13 @@ pub fn add_containers_from_files(args: TokenStream, input: TokenStream) -> Token
         .join("\n");
     let intersect_function_calls = names
         .iter()
-        .map(|x| {
-            format!(
-                "let {}s_ret = self.intersect_{}(ray); if {}s_ret.is_some() {{ return {}s_ret }}",
-                x, x, x, x
-            )
-        })
+        .map(|x| format!("self.intersect_{}(ray),", x))
         .collect::<Vec<String>>()
         .join("\n");
     println!("{}", containers_string);
     println!("{}", containers_new_string);
     println!("{}", namespaces_string);
+    println!("{}", intersect_function_calls);
     format!(
         "
         {namespaces_string}
@@ -148,9 +144,14 @@ pub fn add_containers_from_files(args: TokenStream, input: TokenStream) -> Token
             {intersect_functions}
 
             pub fn intersect(&self, ray: &ray::Ray) -> Option<(f64, crate::vec3::UnitVec3)> {{
-                {intersect_function_calls}
 
-                None
+                vec![
+                    {intersect_function_calls}
+                ]
+                    .iter()
+                    .filter(|x| x.is_some())
+                    .map(|x| x.unwrap())
+                    .min_by(|x, y| x.0.partial_cmp(&y.0).unwrap())
             }}
         }}"
     )

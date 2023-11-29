@@ -48,6 +48,77 @@ impl Cube {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ray::Ray;
-    use crate::vec3::Vec3;
+
+    #[test]
+    fn test_intersect() {
+        let cube = Cube::new(Pnt3::new(0.0, 0.0, 0.0), Pnt3::new(1.0, 1.0, 1.0));
+        let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, -1.0), UnitVec3::new(0.0, 0.0, 1.0));
+        let (t, normal) = cube.intersect(&ray).unwrap();
+        assert_eq!(t, 1.0);
+        assert_eq!(normal, UnitVec3::new(0.0, 0.0, -1.0));
+
+        let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, 1.0), UnitVec3::new(0.0, 0.0, 1.0));
+        let (t, normal) = cube.intersect(&ray).unwrap();
+        assert_eq!(t, 0.0);
+        assert_eq!(normal, UnitVec3::new(0.0, 0.0, 1.0));
+
+        // x
+        let ray = ray::Ray::new(Pnt3::new(-1.0, 0.5, 0.5), UnitVec3::new(1.0, 0.0, 0.0));
+        let (t, normal) = cube.intersect(&ray).unwrap();
+        assert_eq!(t, 1.0);
+        assert_eq!(normal, UnitVec3::new(-1.0, 0.0, 0.0));
+
+        let ray = ray::Ray::new(Pnt3::new(1.0, 0.5, 0.5), UnitVec3::new(1.0, 0.0, 0.0));
+        let (t, normal) = cube.intersect(&ray).unwrap();
+        assert_eq!(t, 0.0);
+        assert_eq!(normal, UnitVec3::new(1.0, 0.0, 0.0));
+
+        // y
+        let ray = ray::Ray::new(Pnt3::new(0.5, -1.0, 0.5), UnitVec3::new(0.0, 1.0, 0.0));
+        let (t, normal) = cube.intersect(&ray).unwrap();
+        assert_eq!(t, 1.0);
+        assert_eq!(normal, UnitVec3::new(0.0, -1.0, 0.0));
+
+        let ray = ray::Ray::new(Pnt3::new(0.5, 1.0, 0.5), UnitVec3::new(0.0, 1.0, 0.0));
+        let (t, normal) = cube.intersect(&ray).unwrap();
+        assert_eq!(t, 0.0);
+        assert_eq!(normal, UnitVec3::new(0.0, 1.0, 0.0));
+
+        // xz
+        let ray = ray::Ray::new(Pnt3::new(-1.0, 0.5, -1.0), UnitVec3::new(1.0, 0.0, 1.0));
+        let (t, normal) = cube.intersect(&ray).unwrap();
+        assert_eq!(t, 1.4142135623730951);
+        assert_eq!(normal, UnitVec3::new(-1.0, 0.0, -1.0));
+
+        let ray = ray::Ray::new(Pnt3::new(1.0, 0.5, 1.0), UnitVec3::new(-1.0, 0.0, -1.0));
+        let (t, normal) = cube.intersect(&ray).unwrap();
+        assert_eq!(t, 0.0);
+        assert_eq!(normal, UnitVec3::new(1.0, 0.0, 1.0));
+
+        // odd angle
+        let ray = ray::Ray::new(Pnt3::new(0.0, 0.0, 0.0), UnitVec3::new(1.0, 1.0, 1.0));
+        let (t, normal) = cube.intersect(&ray).unwrap();
+        assert_eq!(t, 0.0);
+        assert_eq!(
+            normal,
+            UnitVec3::new(
+                -0.5773502691896258,
+                -0.5773502691896258,
+                -0.5773502691896258
+            )
+        );
+
+        // no intersection
+        let ray = ray::Ray::new(Pnt3::new(5.0, 0.0, 0.0), UnitVec3::new(-1.0, 0.3, 0.0));
+        assert!(cube.intersect(&ray).is_none());
+
+        let ray = ray::Ray::new(Pnt3::new(5.0, 0.0, 0.0), UnitVec3::new(0.0, -1.0, 0.0));
+        assert!(cube.intersect(&ray).is_none());
+
+        let ray = ray::Ray::new(Pnt3::new(0.0, 5.0, 0.0), UnitVec3::new(0.0, 0.0, -1.0));
+        assert!(cube.intersect(&ray).is_none());
+
+        let ray = ray::Ray::new(Pnt3::new(0.0, 5.0, 0.0), UnitVec3::new(1.0, 1.0, 1.0));
+        assert!(cube.intersect(&ray).is_none());
+    }
 }
