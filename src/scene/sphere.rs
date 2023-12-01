@@ -10,6 +10,7 @@ pub struct Sphere {
 }
 
 impl Sphere {
+    #[requires(r > 0.0)]
     #[ensures(ret.mid == mid)]
     #[ensures(ret.r == r)]
     pub fn new(mid: Pnt3, r: f64) -> Sphere {

@@ -6,7 +6,7 @@ pub mod scene;
 pub mod vec3;
 
 use image::Image;
-use vec3::{Pnt3, Vec3};
+use vec3::{Pnt3, UnitVec3, Vec3};
 
 #[macro_use]
 extern crate my_macro;
@@ -15,8 +15,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cam = camera::Camera::look_at(
         Vec3 {
             x: 300.0,
-            y: 0.0,
-            z: 0.0,
+            y: 10.0,
+            z: 300.0,
         },
         Vec3 {
             x: 0.0,
@@ -31,13 +31,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Pnt3 {
             x: 0.0,
             y: 0.0,
-            z: 0.0,
+            z: -50.0,
         },
-        100.0,
+        33.3,
     ));
     scene.add_cube(scene::cube::Cube::new(
         Pnt3 {
-            x: 0.0,
+            x: -50.0,
             y: 0.0,
             z: 0.0,
         },
@@ -46,6 +46,61 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             y: 50.0,
             z: 50.0,
         },
+    ));
+    scene.add_plane(scene::plane::Plane::new(
+        Pnt3 {
+            x: 0.0,
+            y: -50.0,
+            z: 0.0,
+        },
+        UnitVec3 {
+            x: 0.0,
+            y: 1.0,
+            z: 0.0,
+        },
+    ));
+    // Show Coordinate system origin
+    scene.add_line(scene::line::Line::new(
+        Pnt3 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        UnitVec3 {
+            x: 1.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        50.0,
+        100.0,
+    ));
+    scene.add_line(scene::line::Line::new(
+        Pnt3 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        UnitVec3 {
+            x: 0.0,
+            y: 1.0,
+            z: 0.0,
+        },
+        50.0,
+        100.0,
+    ));
+    scene.add_line(scene::line::Line::new(
+        Pnt3 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        UnitVec3 {
+            x: 0.0,
+            y: 0.0,
+            z: 1.0,
+        },
+        50.0,
+        100.0,
     ));
     let image = Image::gen_image(&cam, &scene, 1600, 900);
     image.save_to_file("/tmp/run_render.ppm")?;

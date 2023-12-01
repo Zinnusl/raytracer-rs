@@ -2,8 +2,12 @@ use contracts::*;
 
 use crate::camera::Camera;
 use crate::color::Color;
+use crate::image::samplers::sample_cluster::SampleCluster;
 use crate::ray::Ray;
 use crate::scene::Scene;
+use indicatif::ProgressIterator;
+
+pub mod samplers;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Image {
@@ -39,26 +43,23 @@ impl Image {
     #[requires(height > 0)]
     #[ensures(ret.pixels.len() == (ret.width * ret.height) as usize)]
     pub fn gen_image(cam: &Camera, scene: &Scene, width: u32, height: u32) -> Image {
-        // ray_gen: &mut dyn Iterator<Item = Ray>
-        let ray_gen = (0..width * height).map(|i| {
-            let x = (i % width) as f64;
-            let y = (i / height) as f64;
-            // let right = cam.right * (2.0 * (x + 0.5) / width as f64 - 1.0) * cam.aspect_ratio;
-            let right = cam.right * (2.0 * (x + 0.5) / height as f64 - 1.0);
-            let up = cam.up * (2.0 * (y + 0.5) / width as f64 - 1.0);
-            let pnt = cam.center + right * cam.focal_length + up * cam.focal_length;
-            Ray::new(pnt, cam.up.cross(cam.right).normalize().unwrap())
-        });
+        let ray_gen = cam
+            .get_rays(width, height)
+            .map(|ray| samplers::sample_cluster::SampleCluster::from_camera_ray(cam.clone(), ray));
+
         let mut image = Image::noise(&mut random::default(1337), width, height);
-        for (i, ray) in ray_gen.enumerate() {
-            if let Some((_t, normal)) = scene.intersect(&ray) {
-                let color = Color {
-                    r: ((normal.x * 255.0 + (255 as f64) * normal.dot(ray.dir).exp()) / 2.0) as u8,
-                    g: ((normal.y * 255.0 + (255 as f64) * normal.dot(ray.dir).exp()) / 2.0) as u8,
-                    b: ((normal.z * 255.0 + (255 as f64) * normal.dot(ray.dir).exp()) / 2.0) as u8,
-                };
-                image.pixels[i] = color;
-            }
+        let samples_clusters = ray_gen.collect::<Vec<_>>();
+        for (i, cluster) in samples_clusters.into_iter().progress().enumerate() {
+            image.pixels[i] = cluster.fold(Color::black(), |acc, ray| {
+                let mut color = Color::black();
+                let hit = scene.intersect(&ray);
+                if let Some(hit) = hit {
+                    color.r = (hit.1.x * 255.0) as u8;
+                    color.g = (hit.1.y * 255.0) as u8;
+                    color.b = (hit.1.z * 255.0) as u8;
+                }
+                acc + color
+            });
         }
         image
     }
