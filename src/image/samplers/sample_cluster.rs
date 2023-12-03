@@ -1,8 +1,10 @@
 use random::Source;
 
 use crate::camera::Camera;
-use crate::ray::Ray;
+use crate::ray::{Ray, UpRightBoundedRay};
 use crate::vec3::Vec3;
+use intervals_general::bound_pair::BoundPair;
+use intervals_general::interval::Interval;
 
 /// A cluster of rays that are close to each other.
 pub struct SampleCluster {
@@ -16,7 +18,7 @@ impl SampleCluster {
     const CLUSTER_SIZE: usize = 1;
     /// Creates a new sample cluster from a camera and a ray.
     /// Returns an iterator over the rays in the cluster.
-    pub fn from_camera_ray(camera: Camera, ray: Ray) -> impl Iterator<Item = Ray> {
+    pub fn from_camera_ray(camera: Camera, ray: UpRightBoundedRay) -> impl Iterator<Item = Ray> {
         let cluster = SampleCluster {
             original_ray: ray,
             camera,
@@ -29,7 +31,7 @@ impl SampleCluster {
 
 // Impl Iterator instead of returning an iterator
 impl Iterator for SampleCluster {
-    type Item = Ray;
+    type Item = UpRightBoundedRay;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_iteration >= Self::CLUSTER_SIZE {
@@ -50,6 +52,17 @@ impl Iterator for SampleCluster {
             pnt,
             self.camera.up.cross(self.camera.right).normalize().unwrap(),
         );
+        let ray = UpRightBoundedRay::new(
+            ray,
+            up.normalize().ok()?,
+            right.normalize().ok()?,
+            Interval::Closed {
+                bound_pair: BoundPair::new(-0.5, 0.5)?,
+            },
+            Interval::Closed {
+                bound_pair: BoundPair::new(-0.5, 0.5)?,
+            },
+        );
 
         Some(ray)
     }
@@ -65,3 +78,4 @@ mod tests {
     #[test]
     fn sample_cluster() {}
 }
+
