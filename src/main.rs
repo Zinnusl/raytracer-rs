@@ -5,18 +5,19 @@ pub mod ray;
 pub mod scene;
 pub mod vec3;
 
+use anyhow::Result;
 use image::Image;
 use vec3::{Pnt3, UnitVec3, Vec3};
 
 #[macro_use]
 extern crate my_macro;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<()> {
     let cam = camera::Camera::look_at(
         Vec3 {
-            x: 300.0,
-            y: 10.0,
-            z: 300.0,
+            x: 100.0,
+            y: 50.0,
+            z: 10.0,
         },
         Vec3 {
             x: 0.0,

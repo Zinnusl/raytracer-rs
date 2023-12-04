@@ -46,9 +46,9 @@ impl std::ops::Add for Color {
 
     fn add(self, other: Self) -> Self {
         Color {
-            r: (self.r + other.r) / 2,
-            g: (self.g + other.g) / 2,
-            b: (self.b + other.b) / 2,
+            r: ((self.r as f32 + other.r as f32) / 2.0) as u8,
+            g: ((self.g as f32 + other.g as f32) / 2.0) as u8,
+            b: ((self.b as f32 + other.b as f32) / 2.0) as u8,
         }
     }
 }

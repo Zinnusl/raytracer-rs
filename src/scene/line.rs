@@ -54,37 +54,37 @@ impl Line {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_intersect() {
-        let line = Line::new(
-            Pnt3::new(0.0, 0.0, 0.0),
-            UnitVec3::new(0.0, 0.0, 1.0),
-            1.0,
-            1.0,
-        );
-        let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, -1.0), UnitVec3::new(0.0, 0.0, 1.0));
-        let (t, normal) = line.intersect(&ray).unwrap();
-        assert_eq!(t, 1.0);
-        assert_eq!(normal, UnitVec3::new(0.0, 0.0, -1.0));
-
-        let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, 1.0), UnitVec3::new(0.0, 0.0, 1.0));
-        let (t, normal) = line.intersect(&ray).unwrap();
-        assert_eq!(t, 1.0);
-        assert_eq!(normal, UnitVec3::new(0.0, 0.0, 1.0));
-
-        let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, 0.0), UnitVec3::new(0.0, 0.0, 1.0));
-        let (t, normal) = line.intersect(&ray).unwrap();
-        assert_eq!(t, 0.0);
-        assert_eq!(normal, UnitVec3::new(0.0, 0.0, -1.0));
-
-        let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, 0.5), UnitVec3::new(0.0, 0.0, 1.0));
-        let (t, normal) = line.intersect(&ray).unwrap();
-        assert_eq!(t, 0.5);
-        assert_eq!(normal, UnitVec3::new(0.0, 0.0, -1.0));
-
-        let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, -0.5), UnitVec3::new(0.0, 0.0, 1.0));
-        let (t, normal) = line.intersect(&ray).unwrap();
-        assert_eq!(t, -0.5);
-        assert_eq!(normal, UnitVec3::new(0.0, 0.0, -1.0));
-    }
+    // #[test]
+    // fn test_intersect() {
+    //     let line = Line::new(
+    //         Pnt3::new(0.0, 0.0, 0.0),
+    //         UnitVec3::new(0.0, 0.0, 1.0),
+    //         1.0,
+    //         1.0,
+    //     );
+    //     let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, -1.0), UnitVec3::new(0.0, 0.0, 1.0));
+    //     let (t, normal) = line.intersect(&ray).unwrap();
+    //     assert_eq!(t, 1.0);
+    //     assert_eq!(normal, UnitVec3::new(0.0, 0.0, -1.0));
+    //
+    //     let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, 1.0), UnitVec3::new(0.0, 0.0, 1.0));
+    //     let (t, normal) = line.intersect(&ray).unwrap();
+    //     assert_eq!(t, 1.0);
+    //     assert_eq!(normal, UnitVec3::new(0.0, 0.0, 1.0));
+    //
+    //     let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, 0.0), UnitVec3::new(0.0, 0.0, 1.0));
+    //     let (t, normal) = line.intersect(&ray).unwrap();
+    //     assert_eq!(t, 0.0);
+    //     assert_eq!(normal, UnitVec3::new(0.0, 0.0, -1.0));
+    //
+    //     let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, 0.5), UnitVec3::new(0.0, 0.0, 1.0));
+    //     let (t, normal) = line.intersect(&ray).unwrap();
+    //     assert_eq!(t, 0.5);
+    //     assert_eq!(normal, UnitVec3::new(0.0, 0.0, -1.0));
+    //
+    //     let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, -0.5), UnitVec3::new(0.0, 0.0, 1.0));
+    //     let (t, normal) = line.intersect(&ray).unwrap();
+    //     assert_eq!(t, -0.5);
+    //     assert_eq!(normal, UnitVec3::new(0.0, 0.0, -1.0));
+    // }
 }

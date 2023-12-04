@@ -68,20 +68,20 @@ impl Camera {
             let x = (i % image_width) as f64;
             let y = (i / image_height) as f64;
             let dist_right = |x| (2.0 * (x + 0.5) / image_height as f64 - 1.0) * self.focal_length;
-            let dist_up = |y| (2.0 * (y + 0.5) / image_width as f64 - 1.0) * self.focal_length;
+            let dist_up = |y| (2.0 * (y + 0.5) / image_height as f64 - 1.0) * self.focal_length;
             let right = self.right * dist_right(x);
             let up = self.up * dist_up(y);
             let pnt = self.center + right + up;
             let ray = Ray::new(pnt, self.up.cross(self.right).normalize().unwrap());
             UpRightBoundedRay::new(
                 ray,
-                up.normalize().unwrap(),
-                right.normalize().unwrap(),
+                self.up,
+                self.right,
                 Interval::Closed {
-                    bound_pair: BoundPair::new(dist_right(-0.5), dist_right(0.5)).unwrap(),
+                    bound_pair: BoundPair::new(dist_right(0.0), dist_right(1.0)).unwrap(),
                 },
                 Interval::Closed {
-                    bound_pair: BoundPair::new(dist_up(-0.5), dist_up(0.5)).unwrap(),
+                    bound_pair: BoundPair::new(dist_up(0.0), dist_up(1.0)).unwrap(),
                 },
             )
         })
@@ -92,6 +92,109 @@ impl Camera {
 mod tests {
     use super::*;
     use crate::vec3::Vec3;
+
+    #[test]
+    fn distribution() {
+        let focal_length = 1.0;
+        let image_width = 2;
+        let image_height = 2;
+
+        let dist_right = |x| (2.0 * (x + 0.5) / image_height as f64 - 1.0) * focal_length;
+        let dist_up = |y| (2.0 * (y + 0.5) / image_width as f64 - 1.0) * focal_length;
+
+        assert_eq!(dist_right(0.0), -0.5);
+        assert_eq!(dist_right(1.0), 0.5);
+        assert_eq!(dist_right(2.0), 1.5);
+
+        assert_eq!(dist_up(0.0), -0.5);
+        assert_eq!(dist_up(1.0), 0.5);
+        assert_eq!(dist_up(2.0), 1.5);
+    }
+
+    #[test]
+    fn get_rays() {
+        let camera = Camera::look_at(Pnt3::new(0.0, 0.0, 1.0), Pnt3::new(0.0, 0.0, 0.0));
+        assert_eq!(camera.up.x, 0.0);
+        assert_eq!(camera.up.y, 1.0);
+        assert_eq!(camera.up.z, 0.0);
+        assert_eq!(camera.right.x, 1.0);
+        assert_eq!(camera.right.y, 0.0);
+        assert_eq!(camera.right.z, 0.0);
+        let mut rays = camera.get_rays(2, 2);
+        let ray = rays.next().unwrap();
+        assert_eq!(ray.ray.origin.x, -0.5);
+        assert_eq!(ray.ray.origin.y, -0.5);
+        assert_eq!(ray.ray.origin.z, 1.0);
+        assert_eq!(ray.ray.dir.x, 0.0);
+        assert_eq!(ray.ray.dir.y, 0.0);
+        assert_eq!(ray.ray.dir.z, -1.0);
+        assert_eq!(ray.up_vec.x, 0.0);
+        assert_eq!(ray.up_vec.y, 1.0);
+        assert_eq!(ray.up_vec.z, 0.0);
+        assert_eq!(ray.right_vec.x, 1.0);
+        assert_eq!(ray.right_vec.y, 0.0);
+        assert_eq!(ray.right_vec.z, 0.0);
+        match ray.up_interval {
+            Interval::Closed { bound_pair } => {
+                assert_eq!(bound_pair.left(), &-0.5);
+                assert_eq!(bound_pair.right(), &0.5);
+            }
+            _ => panic!("Wrong interval type"),
+        }
+        match ray.right_interval {
+            Interval::Closed { bound_pair } => {
+                assert_eq!(bound_pair.left(), &-0.5);
+                assert_eq!(bound_pair.right(), &0.5);
+            }
+            _ => panic!("Wrong interval type"),
+        }
+
+        let ray = rays.next().unwrap();
+        assert_eq!(ray.ray.origin.x, 0.5);
+        assert_eq!(ray.ray.origin.y, -0.5);
+        assert_eq!(ray.ray.origin.z, 1.0);
+        assert_eq!(ray.ray.dir.x, 0.0);
+        assert_eq!(ray.ray.dir.y, 0.0);
+        assert_eq!(ray.ray.dir.z, -1.0);
+        assert_eq!(ray.up_vec.x, 0.0);
+        assert_eq!(ray.up_vec.y, 1.0);
+        assert_eq!(ray.up_vec.z, 0.0);
+        assert_eq!(ray.right_vec.x, 1.0);
+        assert_eq!(ray.right_vec.y, 0.0);
+        assert_eq!(ray.right_vec.z, 0.0);
+        match ray.up_interval {
+            Interval::Closed { bound_pair } => {
+                assert_eq!(bound_pair.left(), &-0.5);
+                assert_eq!(bound_pair.right(), &0.5);
+            }
+            _ => panic!("Wrong interval type"),
+        }
+        match ray.right_interval {
+            Interval::Closed { bound_pair } => {
+                assert_eq!(bound_pair.left(), &-0.5);
+                assert_eq!(bound_pair.right(), &0.5);
+            }
+            _ => panic!("Wrong interval type"),
+        }
+        let ray = rays.next().unwrap();
+        assert_eq!(ray.ray.origin.x, -0.5);
+        assert_eq!(ray.ray.origin.y, 0.5);
+        assert_eq!(ray.ray.origin.z, 1.0);
+        let ray = rays.next().unwrap();
+        assert_eq!(ray.ray.origin.x, 0.5);
+        assert_eq!(ray.ray.origin.y, 0.5);
+        assert_eq!(ray.ray.origin.z, 1.0);
+        let ray = rays.next();
+        assert!(ray.is_none());
+
+        let mut rays = camera.get_rays(1, 1);
+        let ray = rays.next().unwrap();
+        assert_eq!(ray.ray.origin.x, 0.0);
+        assert_eq!(ray.ray.origin.y, 0.0);
+        assert_eq!(ray.ray.origin.z, 1.0);
+        let ray = rays.next();
+        assert!(ray.is_none());
+    }
 
     #[test]
     fn camera_look_at() {

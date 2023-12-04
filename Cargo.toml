@@ -10,5 +10,7 @@ contracts = "*"
 tokio = { version = "1.15.0", features = ["full"] }
 random = "*"
 my_macro = { path = "my_macro" }
-indicatif = "*"
+indicatif = {version = "*", features = ["rayon"] }
 intervals-general = "*"
+anyhow = "*"
+rayon = "*"

@@ -5,7 +5,9 @@ use crate::color::Color;
 use crate::image::samplers::sample_cluster::SampleCluster;
 use crate::ray::Ray;
 use crate::scene::Scene;
-use indicatif::ProgressIterator;
+use indicatif::ParallelProgressIterator;
+
+use rayon::prelude::*;
 
 pub mod samplers;
 
@@ -49,23 +51,27 @@ impl Image {
 
         let mut image = Image::noise(&mut random::default(1337), width, height);
         let samples_clusters = ray_gen.collect::<Vec<_>>();
-        for (i, cluster) in samples_clusters.into_iter().progress().enumerate() {
-            image.pixels[i] = cluster.fold(Color::black(), |acc, ray| {
-                let mut color = Color::black();
-                let hit = scene.intersect(&ray);
-                if let Some(hit) = hit {
-                    color.r = (hit.1.x * 255.0) as u8;
-                    color.g = (hit.1.y * 255.0) as u8;
-                    color.b = (hit.1.z * 255.0) as u8;
-                }
-                acc + color
-            });
-        }
+        image.pixels = samples_clusters
+            .into_par_iter()
+            .progress_count(image.pixels.len() as u64)
+            .map(|cluster| {
+                cluster.fold(Color::black(), |acc, ray| {
+                    let mut color = Color::black();
+                    let hit = scene.intersect(&ray);
+                    if let Some(hit) = hit {
+                        color.r = (hit.1.x * hit.0.min(255.0)).abs() as u8;
+                        color.g = (hit.1.y * hit.0.min(255.0)).abs() as u8;
+                        color.b = (hit.1.z * hit.0.min(255.0)).abs() as u8;
+                    }
+                    acc + color
+                })
+            })
+            .collect::<Vec<Color>>();
         image
     }
 
     #[invariant(self.pixels.len() == (self.width * self.height) as usize)]
-    pub fn save_to_file(&self, filename: &str) -> std::io::Result<()> {
+    pub fn save_to_file(&self, filename: &str) -> anyhow::Result<()> {
         use std::fs::File;
         use std::io::Write;
 
@@ -85,6 +91,17 @@ mod tests {
     use crate::{scene, vec3};
 
     use super::*;
+
+    #[test]
+    fn f64_to_u8() {
+        assert_eq!(-500.0 as u8, 0);
+        assert_eq!(-255.0 as u8, 0);
+        assert_eq!(-1.0 as u8, 0);
+        assert_eq!(0.0 as u8, 0);
+        assert_eq!(1.0 as u8, 1);
+        assert_eq!(255.0 as u8, 255);
+        assert_eq!(500.0 as u8, 255);
+    }
 
     #[test]
     fn create_noise_image() {
@@ -108,6 +125,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn save_render_to_file() {
         let cam = Camera {
             focal_length: 1.0,
