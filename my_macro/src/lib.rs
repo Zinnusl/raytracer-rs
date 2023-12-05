@@ -120,10 +120,10 @@ pub fn add_containers_from_files(args: TokenStream, input: TokenStream) -> Token
         .map(|x| format!("self.intersect_{}(ray),", x))
         .collect::<Vec<String>>()
         .join("\n");
-    println!("{}", containers_string);
-    println!("{}", containers_new_string);
-    println!("{}", namespaces_string);
-    println!("{}", intersect_function_calls);
+    // println!("{}", containers_string);
+    // println!("{}", containers_new_string);
+    // println!("{}", namespaces_string);
+    // println!("{}", intersect_function_calls);
     format!(
         "
         {namespaces_string}
