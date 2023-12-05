@@ -23,6 +23,18 @@ impl Image {
     #[requires(width > 0)]
     #[requires(height > 0)]
     #[ensures(ret.pixels.len() == (ret.width * ret.height) as usize)]
+    pub fn new(width: u32, height: u32) -> Image {
+        Image {
+            width,
+            height,
+            aspect_ratio: width as f64 / height as f64,
+            pixels: vec![Color::black(); (width * height) as usize],
+        }
+    }
+
+    #[requires(width > 0)]
+    #[requires(height > 0)]
+    #[ensures(ret.pixels.len() == (ret.width * ret.height) as usize)]
     pub fn noise<RandGen>(rand: &mut RandGen, width: u32, height: u32) -> Image
     where
         RandGen: random::Source,
@@ -55,6 +67,7 @@ impl Image {
             .into_par_iter()
             .progress_count(image.pixels.len() as u64)
             .map(|cluster| {
+                let len = cluster.len();
                 let color = cluster.fold((0f64, 0f64, 0f64), |acc, ray| {
                     let hit = scene.intersect(&ray);
                     if let Some(hit) = hit {
@@ -69,9 +82,9 @@ impl Image {
                 });
 
                 Color {
-                    r: (color.0 / 64.0 as f64) as u8,
-                    g: (color.1 / 64.0 as f64) as u8,
-                    b: (color.2 / 64.0 as f64) as u8,
+                    r: (color.0 / len as f64) as u8,
+                    g: (color.1 / len as f64) as u8,
+                    b: (color.2 / len as f64) as u8,
                 }
             })
             .collect::<Vec<Color>>();

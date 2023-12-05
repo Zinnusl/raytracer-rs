@@ -15,13 +15,13 @@ pub struct SampleCluster {
 }
 
 impl SampleCluster {
-    const CLUSTER_SIZE: usize = 64;
+    const CLUSTER_SIZE: usize = 256;
     /// Creates a new sample cluster from a camera and a ray.
     /// Returns an iterator over the rays in the cluster.
     pub fn from_camera_ray(
         camera: Camera,
         ray: UpRightBoundedRay,
-    ) -> impl Iterator<Item = Ray> + Send {
+    ) -> impl Iterator<Item = Ray> + (ExactSizeIterator) + Send {
         let cluster = SampleCluster {
             rand: random::default(ray.ray.origin.x as u64),
             ray,
@@ -50,6 +50,10 @@ impl SampleCluster {
 impl Iterator for SampleCluster {
     type Item = Ray;
 
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (Self::CLUSTER_SIZE, Some(Self::CLUSTER_SIZE))
+    }
+
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_iteration >= Self::CLUSTER_SIZE {
             return None;
@@ -71,6 +75,12 @@ impl Iterator for SampleCluster {
         let ray = Ray::new(pnt, self.ray.ray.dir);
 
         Some(ray)
+    }
+}
+
+impl ExactSizeIterator for SampleCluster {
+    fn len(&self) -> usize {
+        Self::CLUSTER_SIZE
     }
 }
 
