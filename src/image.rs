@@ -55,16 +55,24 @@ impl Image {
             .into_par_iter()
             .progress_count(image.pixels.len() as u64)
             .map(|cluster| {
-                cluster.fold(Color::black(), |acc, ray| {
-                    let mut color = Color::black();
+                let color = cluster.fold((0f64, 0f64, 0f64), |acc, ray| {
                     let hit = scene.intersect(&ray);
                     if let Some(hit) = hit {
-                        color.r = (hit.1.x * hit.0.min(255.0)).abs() as u8;
-                        color.g = (hit.1.y * hit.0.min(255.0)).abs() as u8;
-                        color.b = (hit.1.z * hit.0.min(255.0)).abs() as u8;
+                        (
+                            (hit.1.x * hit.0.min(255.0)).abs() + acc.0,
+                            (hit.1.y * hit.0.min(255.0)).abs() + acc.1,
+                            (hit.1.z * hit.0.min(255.0)).abs() + acc.2,
+                        )
+                    } else {
+                        acc
                     }
-                    acc + color
-                })
+                });
+
+                Color {
+                    r: (color.0 / 64.0 as f64) as u8,
+                    g: (color.1 / 64.0 as f64) as u8,
+                    b: (color.2 / 64.0 as f64) as u8,
+                }
             })
             .collect::<Vec<Color>>();
         image
