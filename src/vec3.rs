@@ -89,6 +89,24 @@ impl Vec3 {
     }
 }
 
+pub struct RandomInUnitSphere<'a> {
+    rand: &'a mut dyn random::Source,
+}
+
+impl<'a> RandomInUnitSphere<'a> {
+    pub fn new(rand: &'a mut (dyn random::Source + 'a)) -> RandomInUnitSphere<'a> {
+        RandomInUnitSphere { rand }
+    }
+}
+
+impl<'a> Iterator for RandomInUnitSphere<'a> {
+    type Item = UnitVec3;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(UnitVec3::random_in_unit_sphere(self.rand))
+    }
+}
+
 impl UnitVec3 {
     #[ensures(((ret.x * ret.x + ret.y * ret.y + ret.z * ret.z).sqrt() - 1.0) < 0.0001)]
     pub fn new_unchecked(x: impl Into<f64>, y: impl Into<f64>, z: impl Into<f64>) -> UnitVec3 {
@@ -111,6 +129,22 @@ impl UnitVec3 {
         }
     }
 
+    pub fn random_in_unit_sphere(rand: &mut dyn random::Source) -> UnitVec3 {
+        let mut vec = Vec3::new(
+            rand.read_f64() * 2.0 - 1.0,
+            rand.read_f64() * 2.0 - 1.0,
+            rand.read_f64() * 2.0 - 1.0,
+        );
+        while vec.len().abs() < std::f64::EPSILON {
+            vec = Vec3::new(
+                rand.read_f64() * 2.0 - 1.0,
+                rand.read_f64() * 2.0 - 1.0,
+                rand.read_f64() * 2.0 - 1.0,
+            );
+        }
+        vec.normalize().unwrap()
+    }
+
     pub fn dot(&self, other: impl Into<Vec3>) -> f64 {
         let other: Vec3 = other.into();
         self.x * other.x + self.y * other.y + self.z * other.z
@@ -126,12 +160,52 @@ impl UnitVec3 {
     }
 }
 
+impl From<&UnitVec3> for Vec3 {
+    fn from(unit_vec: &UnitVec3) -> Self {
+        Vec3 {
+            x: unit_vec.x,
+            y: unit_vec.y,
+            z: unit_vec.z,
+        }
+    }
+}
 impl From<UnitVec3> for Vec3 {
     fn from(unit_vec: UnitVec3) -> Self {
         Vec3 {
             x: unit_vec.x,
             y: unit_vec.y,
             z: unit_vec.z,
+        }
+    }
+}
+
+// Implement unary - for Vec3
+impl std::ops::Neg for Vec3 {
+    type Output = Self;
+
+    #[ensures(ret.x == -self.x)]
+    #[ensures(ret.y == -self.y)]
+    #[ensures(ret.z == -self.z)]
+    fn neg(self) -> Self {
+        Vec3 {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+        }
+    }
+}
+
+impl std::ops::Neg for UnitVec3 {
+    type Output = UnitVec3;
+
+    #[ensures(ret.x == -self.x)]
+    #[ensures(ret.y == -self.y)]
+    #[ensures(ret.z == -self.z)]
+    fn neg(self) -> UnitVec3 {
+        UnitVec3 {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
         }
     }
 }

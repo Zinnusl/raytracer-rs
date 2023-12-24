@@ -1,6 +1,6 @@
 use contracts::*;
 
-use crate::ray;
+use crate::ray::{self, IntersectResult};
 use crate::vec3::{Pnt3, UnitVec3};
 
 #[derive(Debug, PartialEq, Clone)]
@@ -17,7 +17,7 @@ impl Sphere {
         Sphere { mid, r }
     }
 
-    pub fn intersect(&self, ray: &ray::Ray) -> Option<(f64, UnitVec3)> {
+    pub fn intersect(&self, ray: &ray::Ray) -> Option<IntersectResult> {
         let a = ray.dir.dot(ray.dir);
         let b = 2.0 * ray.dir.dot(ray.origin - self.mid);
         let c = (ray.origin - self.mid).dot(ray.origin - self.mid) - self.r * self.r;
@@ -31,7 +31,11 @@ impl Sphere {
             return None;
         }
         let t = t_1.max(0.0).min(t_2.max(0.0));
-        Some((t, (ray.at(t) - self.mid).normalize().unwrap()))
+        Some(IntersectResult {
+            t,
+            normal: (ray.at(t) - self.mid).normalize().unwrap(),
+            material: Default::default(),
+        })
     }
 }
 
@@ -102,14 +106,15 @@ mod tests {
         let intersection = sphere.intersect(&ray);
         assert_eq!(
             intersection,
-            Some((
-                1.0,
-                UnitVec3 {
+            Some(IntersectResult {
+                t: 1.0,
+                normal: UnitVec3 {
                     x: 0.0,
                     y: 0.0,
                     z: -1.0
-                }
-            ))
+                },
+                material: Default::default()
+            })
         );
 
         let ray = Ray::new(
@@ -177,14 +182,15 @@ mod tests {
         let intersection = sphere.intersect(&ray);
         assert_eq!(
             intersection,
-            Some((
-                432.2788508967193,
-                UnitVec3 {
+            Some(IntersectResult {
+                t: 432.2788508967193,
+                normal: UnitVec3 {
                     x: 0.009999999999999995,
                     y: -0.4799999999999998,
                     z: 0.8772114910328067
-                }
-            ))
+                },
+                material: Default::default()
+            })
         );
     }
 }

@@ -104,11 +104,11 @@ pub fn add_containers_from_files(args: TokenStream, input: TokenStream) -> Token
         .iter()
         .map(|x| {
             format!(
-                "fn intersect_{}(&self, ray: &ray::Ray) -> Option<(f64, crate::vec3::UnitVec3)> {{
+                "fn intersect_{}(&self, ray: &Ray) -> Option<IntersectResult> {{
                     self.{}s.iter().map(|obj| obj.intersect(ray))
                         .filter(|x| x.is_some())
                         .map(|x| x.unwrap())
-                        .min_by(|x, y| x.0.partial_cmp(&y.0).unwrap())
+                        .min_by(|x, y| x.t.partial_cmp(&y.t).unwrap())
                 }}",
                 x, x
             )
@@ -143,15 +143,15 @@ pub fn add_containers_from_files(args: TokenStream, input: TokenStream) -> Token
 
             {intersect_functions}
 
-            pub fn intersect(&self, ray: &ray::Ray) -> Option<(f64, crate::vec3::UnitVec3)> {{
+            pub fn intersect(&self, ray: &Ray) -> Option<IntersectResult> {{
 
                 vec![
                     {intersect_function_calls}
                 ]
-                    .iter()
-                    .filter(|x| x.is_some())
-                    .map(|x| x.unwrap())
-                    .min_by(|x, y| x.0.partial_cmp(&y.0).unwrap())
+                    .into_iter()
+                    .filter(|scene_intersect| scene_intersect.is_some())
+                    .map(|scene_intersect_map| scene_intersect_map.unwrap())
+                    .min_by(|scene_intersect, y| scene_intersect.t.partial_cmp(&y.t).unwrap())
             }}
         }}"
     )

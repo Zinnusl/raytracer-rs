@@ -1,6 +1,7 @@
 use contracts::*;
 
-use crate::ray;
+use crate::material;
+use crate::ray::{self, IntersectResult};
 use crate::vec3::{Pnt3, UnitVec3, Vec3};
 
 #[derive(Debug, PartialEq, Clone)]
@@ -15,7 +16,7 @@ impl Cube {
         Cube { p1, p2 }
     }
 
-    pub fn intersect(&self, ray: &ray::Ray) -> Option<(f64, UnitVec3)> {
+    pub fn intersect(&self, ray: &ray::Ray) -> Option<IntersectResult> {
         let mut t_min = -f64::INFINITY;
         let mut t_max = f64::INFINITY;
         for i in 0..3 {
@@ -41,7 +42,18 @@ impl Cube {
                 normal[i] = 1.0;
             }
         }
-        Some((t, normal.normalize().unwrap()))
+        let material = material::Material {
+            color: Vec3::new(255.0, 100.0, 100.0),
+            albedo: 0.1,
+            roughness: 0.8,
+            refractive_index: 1.0,
+            absorption_coefficient: 0.0,
+        };
+        Some(IntersectResult {
+            t,
+            normal: normal.normalize().unwrap(),
+            material,
+        })
     }
 }
 
@@ -53,51 +65,67 @@ mod tests {
     fn test_intersect() {
         let cube = Cube::new(Pnt3::new(0.0, 0.0, 0.0), Pnt3::new(1.0, 1.0, 1.0));
         let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, -1.0), UnitVec3::new(0.0, 0.0, 1.0));
-        let (t, normal) = cube.intersect(&ray).unwrap();
+        let intersectresult = cube.intersect(&ray).unwrap();
+        let t = intersectresult.t;
+        let normal = intersectresult.normal;
         assert_eq!(t, 1.0);
         assert_eq!(normal, UnitVec3::new(0.0, 0.0, -1.0));
 
         let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, 1.0), UnitVec3::new(0.0, 0.0, 1.0));
-        let (t, normal) = cube.intersect(&ray).unwrap();
+        let intersectresult = cube.intersect(&ray).unwrap();
+        let t = intersectresult.t;
+        let normal = intersectresult.normal;
         assert_eq!(t, 0.0);
         assert_eq!(normal, UnitVec3::new(0.0, 0.0, 1.0));
 
         // x
         let ray = ray::Ray::new(Pnt3::new(-1.0, 0.5, 0.5), UnitVec3::new(1.0, 0.0, 0.0));
-        let (t, normal) = cube.intersect(&ray).unwrap();
+        let intersectresult = cube.intersect(&ray).unwrap();
+        let t = intersectresult.t;
+        let normal = intersectresult.normal;
         assert_eq!(t, 1.0);
         assert_eq!(normal, UnitVec3::new(-1.0, 0.0, 0.0));
 
         let ray = ray::Ray::new(Pnt3::new(1.0, 0.5, 0.5), UnitVec3::new(1.0, 0.0, 0.0));
-        let (t, normal) = cube.intersect(&ray).unwrap();
+        let intersectresult = cube.intersect(&ray).unwrap();
+        let t = intersectresult.t;
+        let normal = intersectresult.normal;
         assert_eq!(t, 0.0);
         assert_eq!(normal, UnitVec3::new(1.0, 0.0, 0.0));
 
         // y
         let ray = ray::Ray::new(Pnt3::new(0.5, -1.0, 0.5), UnitVec3::new(0.0, 1.0, 0.0));
-        let (t, normal) = cube.intersect(&ray).unwrap();
+        let intersectresult = cube.intersect(&ray).unwrap();
         assert_eq!(t, 1.0);
         assert_eq!(normal, UnitVec3::new(0.0, -1.0, 0.0));
 
         let ray = ray::Ray::new(Pnt3::new(0.5, 1.0, 0.5), UnitVec3::new(0.0, 1.0, 0.0));
-        let (t, normal) = cube.intersect(&ray).unwrap();
+        let intersectresult = cube.intersect(&ray).unwrap();
+        let t = intersectresult.t;
+        let normal = intersectresult.normal;
         assert_eq!(t, 0.0);
         assert_eq!(normal, UnitVec3::new(0.0, 1.0, 0.0));
 
         // xz
         let ray = ray::Ray::new(Pnt3::new(-1.0, 0.5, -1.0), UnitVec3::new(1.0, 0.0, 1.0));
-        let (t, normal) = cube.intersect(&ray).unwrap();
+        let intersectresult = cube.intersect(&ray).unwrap();
+        let t = intersectresult.t;
+        let normal = intersectresult.normal;
         assert_eq!(t, 1.4142135623730951);
         assert_eq!(normal, UnitVec3::new(-1.0, 0.0, -1.0));
 
         let ray = ray::Ray::new(Pnt3::new(1.0, 0.5, 1.0), UnitVec3::new(-1.0, 0.0, -1.0));
-        let (t, normal) = cube.intersect(&ray).unwrap();
+        let intersectresult = cube.intersect(&ray).unwrap();
+        let t = intersectresult.t;
+        let normal = intersectresult.normal;
         assert_eq!(t, 0.0);
         assert_eq!(normal, UnitVec3::new(1.0, 0.0, 1.0));
 
         // odd angle
         let ray = ray::Ray::new(Pnt3::new(0.0, 0.0, 0.0), UnitVec3::new(1.0, 1.0, 1.0));
-        let (t, normal) = cube.intersect(&ray).unwrap();
+        let intersectresult = cube.intersect(&ray).unwrap();
+        let t = intersectresult.t;
+        let normal = intersectresult.normal;
         assert_eq!(t, 0.0);
         assert_eq!(
             normal,

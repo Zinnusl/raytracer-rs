@@ -1,5 +1,3 @@
-use contracts::ensures;
-
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Color {
     pub r: u8,

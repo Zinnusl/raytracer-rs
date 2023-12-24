@@ -2,14 +2,17 @@ use contracts::*;
 
 use crate::camera::Camera;
 use crate::color::Color;
-use crate::image::samplers::sample_cluster::SampleCluster;
 use crate::ray::Ray;
+use crate::scene::sphere::Sphere;
 use crate::scene::Scene;
+use crate::vec3::{self, RandomInUnitSphere, Vec3};
 use indicatif::ParallelProgressIterator;
 
 use rayon::prelude::*;
 
 pub mod samplers;
+
+const BOUNCES: u8 = 255;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Image {
@@ -67,20 +70,75 @@ impl Image {
             .into_par_iter()
             .progress_count(image.pixels.len() as u64)
             .map(|cluster| {
-                let len = cluster.len();
-                let color = cluster.fold((0f64, 0f64, 0f64), |acc, ray| {
-                    let hit = scene.intersect(&ray);
-                    if let Some(hit) = hit {
-                        (
-                            (hit.1.x * hit.0.min(255.0)).abs() + acc.0,
-                            (hit.1.y * hit.0.min(255.0)).abs() + acc.1,
-                            (hit.1.z * hit.0.min(255.0)).abs() + acc.2,
-                        )
-                    } else {
-                        acc
-                    }
-                });
+                let mut rand = random::default(1337);
+                // as random::Source
+                let mut rand: &mut dyn random::Source = &mut rand;
+                let len = cluster.len() as i64;
+                let color = cluster.fold(((0f64, 0f64, 0f64), len), |acc, ray| {
+                    let color =
+                        (1..=BOUNCES).fold(((0.0, 0.0, 0.0), ray, -1i64, true), |acc, _| {
+                            let color = &acc.0;
+                            let ray = &acc.1;
+                            let hits = acc.2;
+                            let has_hit = acc.3;
+                            if !has_hit {
+                                return acc;
+                            }
 
+                            let hit = scene.intersect(&ray);
+                            if let Some(hit) = hit {
+                                let color = (
+                                    (hit.material.color.x * hit.material.albedo
+                                        + hit.material.roughness * rand.read_f64())
+                                    .clamp(0.0, 255.0)
+                                        + color.0,
+                                    (hit.material.color.y * hit.material.albedo).clamp(0.0, 255.0)
+                                        + hit.material.roughness * color.1,
+                                    (hit.material.color.z * hit.material.albedo
+                                        + hit.material.roughness * rand.read_f64())
+                                    .clamp(0.0, 255.0)
+                                        + color.2,
+                                );
+
+                                let hit_point = ray.at(hit.t);
+                                // let hit_normal = hit.normal;
+                                let hit_normal = RandomInUnitSphere::new(rand)
+                                    .map(|normal| {
+                                        let mut normal = normal;
+                                        if normal.dot(&ray.dir) > 0.0 {
+                                            normal = -normal;
+                                        }
+                                        normal
+                                    })
+                                    .find(|normal| {
+                                        let mut normal = normal;
+                                        if normal.dot(&ray.dir) > 0.0 {
+                                            normal = -normal;
+                                        }
+                                        normal.dot(&ray.dir) < 0.0
+                                    })
+                                    .unwrap();
+                                let mut new_ray = Ray::new(hit_point, hit_normal);
+                                new_ray.origin = new_ray.origin + new_ray.dir * 0.0001;
+                                (color, new_ray, hits + 1, true)
+                            } else {
+                                (*color, ray.clone(), hits, false)
+                            }
+                        });
+
+                    let acc_color = acc.0;
+                    let acc_hits = acc.1;
+                    (
+                        (
+                            color.0 .0 + acc_color.0,
+                            color.0 .1 + acc_color.1,
+                            color.0 .2 + acc_color.2,
+                        ),
+                        color.2 + acc_hits,
+                    )
+                });
+                let len = color.1;
+                let color = color.0;
                 Color {
                     r: (color.0 / len as f64) as u8,
                     g: (color.1 / len as f64) as u8,

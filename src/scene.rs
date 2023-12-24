@@ -1,4 +1,4 @@
-use crate::ray;
+use crate::ray::*;
 
 // Using Macro, modify struct to add a container for each type of hitable from folder scene/*.rs
 //

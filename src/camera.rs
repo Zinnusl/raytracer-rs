@@ -1,9 +1,8 @@
 use contracts::*;
-use intervals_general::bound_pair::BoundPair;
 
+use crate::interval::Interval;
 use crate::ray::{Ray, UpRightBoundedRay};
 use crate::vec3::{Pnt3, UnitVec3};
-use intervals_general::interval::Interval;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Camera {
@@ -77,12 +76,8 @@ impl Camera {
                 ray,
                 self.up,
                 self.right,
-                Interval::Closed {
-                    bound_pair: BoundPair::new(dist_right(0.0), dist_right(1.0)).unwrap(),
-                },
-                Interval::Closed {
-                    bound_pair: BoundPair::new(dist_up(0.0), dist_up(1.0)).unwrap(),
-                },
+                Interval::new(dist_right(0.0), dist_right(1.0)),
+                Interval::new(dist_up(0.0), dist_up(1.0)),
             )
         })
     }
@@ -134,20 +129,10 @@ mod tests {
         assert_eq!(ray.right_vec.x, 1.0);
         assert_eq!(ray.right_vec.y, 0.0);
         assert_eq!(ray.right_vec.z, 0.0);
-        match ray.up_interval {
-            Interval::Closed { bound_pair } => {
-                assert_eq!(bound_pair.left(), &-0.5);
-                assert_eq!(bound_pair.right(), &0.5);
-            }
-            _ => panic!("Wrong interval type"),
-        }
-        match ray.right_interval {
-            Interval::Closed { bound_pair } => {
-                assert_eq!(bound_pair.left(), &-0.5);
-                assert_eq!(bound_pair.right(), &0.5);
-            }
-            _ => panic!("Wrong interval type"),
-        }
+        assert_eq!(ray.up_interval.left, -0.5);
+        assert_eq!(ray.up_interval.right, 0.5);
+        assert_eq!(ray.right_interval.left, -0.5);
+        assert_eq!(ray.right_interval.right, 0.5);
 
         let ray = rays.next().unwrap();
         assert_eq!(ray.ray.origin.x, 0.5);
@@ -162,20 +147,10 @@ mod tests {
         assert_eq!(ray.right_vec.x, 1.0);
         assert_eq!(ray.right_vec.y, 0.0);
         assert_eq!(ray.right_vec.z, 0.0);
-        match ray.up_interval {
-            Interval::Closed { bound_pair } => {
-                assert_eq!(bound_pair.left(), &-0.5);
-                assert_eq!(bound_pair.right(), &0.5);
-            }
-            _ => panic!("Wrong interval type"),
-        }
-        match ray.right_interval {
-            Interval::Closed { bound_pair } => {
-                assert_eq!(bound_pair.left(), &-0.5);
-                assert_eq!(bound_pair.right(), &0.5);
-            }
-            _ => panic!("Wrong interval type"),
-        }
+        assert_eq!(ray.up_interval.left, -0.5);
+        assert_eq!(ray.up_interval.right, 0.5);
+        assert_eq!(ray.right_interval.left, -0.5);
+        assert_eq!(ray.right_interval.right, 0.5);
         let ray = rays.next().unwrap();
         assert_eq!(ray.ray.origin.x, -0.5);
         assert_eq!(ray.ray.origin.y, 0.5);

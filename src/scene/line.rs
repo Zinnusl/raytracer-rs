@@ -1,6 +1,4 @@
-use contracts::*;
-
-use crate::ray;
+use crate::ray::{self, IntersectResult};
 use crate::vec3::{Pnt3, UnitVec3, Vec3};
 
 #[derive(Debug, PartialEq, Clone)]
@@ -21,7 +19,7 @@ impl Line {
         }
     }
 
-    pub fn intersect(&self, ray: &ray::Ray) -> Option<(f64, UnitVec3)> {
+    pub fn intersect(&self, ray: &ray::Ray) -> Option<IntersectResult> {
         let mut t_min = -f64::INFINITY;
         let mut t_max = f64::INFINITY;
         for i in 0..3 {
@@ -46,7 +44,11 @@ impl Line {
                 normal[i] = 1.0;
             }
         }
-        Some((t, normal.normalize().unwrap()))
+        Some(IntersectResult {
+            t,
+            normal: normal.normalize().unwrap(),
+            material: Default::default(),
+        })
     }
 }
 
@@ -54,37 +56,47 @@ impl Line {
 mod tests {
     use super::*;
 
-    // #[test]
-    // fn test_intersect() {
-    //     let line = Line::new(
-    //         Pnt3::new(0.0, 0.0, 0.0),
-    //         UnitVec3::new(0.0, 0.0, 1.0),
-    //         1.0,
-    //         1.0,
-    //     );
-    //     let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, -1.0), UnitVec3::new(0.0, 0.0, 1.0));
-    //     let (t, normal) = line.intersect(&ray).unwrap();
-    //     assert_eq!(t, 1.0);
-    //     assert_eq!(normal, UnitVec3::new(0.0, 0.0, -1.0));
-    //
-    //     let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, 1.0), UnitVec3::new(0.0, 0.0, 1.0));
-    //     let (t, normal) = line.intersect(&ray).unwrap();
-    //     assert_eq!(t, 1.0);
-    //     assert_eq!(normal, UnitVec3::new(0.0, 0.0, 1.0));
-    //
-    //     let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, 0.0), UnitVec3::new(0.0, 0.0, 1.0));
-    //     let (t, normal) = line.intersect(&ray).unwrap();
-    //     assert_eq!(t, 0.0);
-    //     assert_eq!(normal, UnitVec3::new(0.0, 0.0, -1.0));
-    //
-    //     let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, 0.5), UnitVec3::new(0.0, 0.0, 1.0));
-    //     let (t, normal) = line.intersect(&ray).unwrap();
-    //     assert_eq!(t, 0.5);
-    //     assert_eq!(normal, UnitVec3::new(0.0, 0.0, -1.0));
-    //
-    //     let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, -0.5), UnitVec3::new(0.0, 0.0, 1.0));
-    //     let (t, normal) = line.intersect(&ray).unwrap();
-    //     assert_eq!(t, -0.5);
-    //     assert_eq!(normal, UnitVec3::new(0.0, 0.0, -1.0));
-    // }
+    #[test]
+    fn test_intersect() {
+        let line = Line::new(
+            Pnt3::new(0.0, 0.0, 0.0),
+            UnitVec3::new(0.0, 0.0, 1.0),
+            50.0,
+            10000.0,
+        );
+        let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, -1.0), UnitVec3::new(0.0, 0.0, 1.0));
+        let intersectresult = line.intersect(&ray).unwrap();
+        let t = intersectresult.t;
+        let normal = intersectresult.normal;
+        assert_eq!(t, 1.0);
+        assert_eq!(normal, UnitVec3::new(0.0, 0.0, -1.0));
+
+        let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, 1.0), UnitVec3::new(0.0, 0.0, 1.0));
+        let intersectresult = line.intersect(&ray).unwrap();
+        let t = intersectresult.t;
+        let normal = intersectresult.normal;
+        assert_eq!(t, 1.0);
+        assert_eq!(normal, UnitVec3::new(0.0, 0.0, 1.0));
+
+        let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, 0.0), UnitVec3::new(0.0, 0.0, 1.0));
+        let intersectresult = line.intersect(&ray).unwrap();
+        let t = intersectresult.t;
+        let normal = intersectresult.normal;
+        assert_eq!(t, 0.0);
+        assert_eq!(normal, UnitVec3::new(0.0, 0.0, -1.0));
+
+        let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, 0.5), UnitVec3::new(0.0, 0.0, 1.0));
+        let intersectresult = line.intersect(&ray).unwrap();
+        let t = intersectresult.t;
+        let normal = intersectresult.normal;
+        assert_eq!(t, 0.5);
+        assert_eq!(normal, UnitVec3::new(0.0, 0.0, -1.0));
+
+        let ray = ray::Ray::new(Pnt3::new(0.5, 0.5, -0.5), UnitVec3::new(0.0, 0.0, 1.0));
+        let intersectresult = line.intersect(&ray).unwrap();
+        let t = intersectresult.t;
+        let normal = intersectresult.normal;
+        assert_eq!(t, -0.5);
+        assert_eq!(normal, UnitVec3::new(0.0, 0.0, -1.0));
+    }
 }

@@ -182,15 +182,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "intervals-general"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6261104c6643ef332fd8a7c1a1e630da692335c701bb5048c32c36826b5bd24e"
-dependencies = [
- "either",
-]
-
-[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -365,7 +356,6 @@ dependencies = [
  "anyhow",
  "contracts",
  "indicatif",
- "intervals-general",
  "my_macro",
  "random",
  "rayon",

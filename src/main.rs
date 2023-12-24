@@ -1,6 +1,8 @@
 pub mod camera;
 pub mod color;
 pub mod image;
+pub mod interval;
+pub mod material;
 pub mod ray;
 pub mod scene;
 pub mod vec3;
@@ -13,7 +15,7 @@ use vec3::{Pnt3, UnitVec3, Vec3};
 extern crate my_macro;
 
 fn main() -> Result<()> {
-    let cam = camera::Camera::look_at(
+    let mut cam = camera::Camera::look_at(
         Vec3 {
             x: 100.0,
             y: 50.0,
@@ -34,7 +36,7 @@ fn main() -> Result<()> {
             y: 0.0,
             z: -50.0,
         },
-        33.3,
+        66.6,
     ));
     scene.add_cube(scene::cube::Cube::new(
         Pnt3 {
@@ -103,7 +105,20 @@ fn main() -> Result<()> {
         50.0,
         100.0,
     ));
-    let image = Image::gen_image(&cam, &scene, 1600, 900);
-    image.save_to_file("/tmp/run_render.ppm")?;
+
+    for i in 0..1 {
+        scene.add_sphere(scene::sphere::Sphere::new(
+            Pnt3 {
+                x: 0.0,
+                y: 0.0,
+                z: -50.0 + i as f64 * 10.0,
+            },
+            5.0,
+        ));
+
+        cam.center.z += 10.0;
+        let image = Image::gen_image(&cam, &scene, 1600, 900);
+        image.save_to_file(format!("/tmp/run_render.ppm").as_str())?;
+    }
     Ok(())
 }
